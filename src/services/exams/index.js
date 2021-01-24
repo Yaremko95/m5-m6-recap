@@ -1,20 +1,28 @@
 const express = require("express");
 const Class = require("../../db/classes");
 const Teacher = require("../../db/teachers");
+const Student = require("../../db/student");
+const Exam = require("../../db/exams");
 const Group = require("../../db/groups");
+const StudentAccount = require("../../db/studentAccount");
 const router = express.Router();
 
 router
   .route("/")
   .get(async (req, res, next) => {
     try {
-      const classes = await Class.findAll({
+      const exams = await Exam.findAll({
         include: [
+          Class,
           { model: Teacher, through: { attributes: [] } },
-          { model: Group, through: { attributes: [] } },
+          {
+            model: Student,
+            include: [Group, StudentAccount],
+            through: { attributes: [] },
+          },
         ],
       });
-      res.send(classes);
+      res.send(exams);
     } catch (e) {
       console.log(e);
       next(e);
@@ -22,28 +30,20 @@ router
   })
   .post(async (req, res, next) => {
     try {
-      const newClass = await Class.create(req.body);
-      res.send(newClass);
     } catch (e) {
       console.log(e);
       next(e);
     }
   });
-router.route("/:classId/:teacherId/teacher").post(async (req, res, next) => {
+router.route("/:classId/:teacherId/:studentId").post(async (req, res, next) => {
   try {
-    const cl = await Class.findByPk(req.params.classId);
-    await cl.addTeacher(req.params.teacherId);
-    res.send(cl);
-  } catch (e) {
-    console.log(e);
-    next(e);
-  }
-});
-router.route("/:classId/:groupId/groups").post(async (req, res, next) => {
-  try {
-    const cl = await Class.findByPk(req.params.classId);
-    await cl.addGroup(req.params.groupId);
-    res.send(cl);
+    const exam = await Exam.create({
+      mark: req.body.mark,
+      classId: req.params.classId,
+    });
+    await exam.addStudent(req.params.studentId);
+    await exam.addTeacher(req.params.teacherId);
+    res.send(exam);
   } catch (e) {
     console.log(e);
     next(e);

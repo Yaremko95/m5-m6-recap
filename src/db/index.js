@@ -6,6 +6,12 @@ const sequelize = new Sequelize(
   {
     host: process.env.PGHOST,
     dialect: "postgres",
+    dialectOptions: {
+      ssl: {
+        require: true,
+        rejectUnauthorized: false,
+      },
+    },
   }
 );
 
@@ -14,3 +20,5 @@ sequelize
   .authenticate()
   .then(() => console.log("Connection has been established"))
   .catch((e) => console.log("Unable to establish connection:", e));
+
+module.exports = sequelize;
